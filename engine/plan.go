@@ -51,6 +51,9 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 		nodesToDestroy: []cluster.NodeId{},
 	}
 
+	// TODO: if ASG is not reconciled (desired cap != no. of healthy instances),
+	//  no action. Also log this.
+
 	stages, err := e.drone.client.Queue()
 	if err != nil {
 		return nil, errors.New(
@@ -60,17 +63,27 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 
 	pendingBuildCount, runningBuildCount := e.countBuilds(stages)
 	if pendingBuildCount > 0 {
+		log.
+			WithField("count", pendingBuildCount).
+			Debugln("Detected pending builds")
+
 		// we need to scale up since builds are queued but not yet running
 		c, err := e.calcUpscaleCount(pendingBuildCount)
 		if err != nil {
 			return nil, err
 		}
+
+		log.
+			WithField("count", c).
+			Infoln("Recommending adding more agents")
+
 		response.action = actionUpscale
 		response.upscaleCount = c
 		return response, nil
 	} else {
-		// we need to determine whether we have under-utilized capacity
-		runningAgents, err := e.drone.agent.cluster.List(ctx, cluster.StateRunning)
+		log.Debugln("Checking for any under-utilized capacity")
+
+		runningAgents, err := e.drone.agent.cluster.List(ctx)
 		if err != nil {
 			return nil, errors.New(
 				fmt.Sprintf("couldn't fetch list of running agent nodes: %v", err),
@@ -84,7 +97,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 		}
 
 		if runningAgentCount == requiredAgentCount {
-			// we optimally meet the build load, no scaling action is required
+			log.Debugln("No scaling action required, recommending NOOP")
 			return response, nil
 		}
 
@@ -98,16 +111,23 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 			)
 		}
 		if len(expendable) == 0 {
-			// we have newly created agent nodes, so even though they're not busy,
-			// we can't destroy them because they haven't reached min retirement
-			// age yet
+			// we have newly created agents, so they're not busy yet because it
+			// might be a while before Drone starts assigning them jobs
+			log.Debugln("Idle agents are not past retirement age, recommending NOOP")
 			return response, nil
 		}
 
 		// we have extra capacity and must downscale
 		log.
 			WithField("count", len(expendable)).
-			Infoln("Extra agent nodes detected")
+			Debugln("Extra agent nodes detected")
+
+		// TODO: Honour agent cluster's minCount.
+		//  If total agents - expendable < minCount, slice expendable list
+
+		log.
+			WithField("count", len(expendable)).
+			Infoln("Recommending removing agents")
 
 		response.action = actionDownscale
 		response.nodesToDestroy = expendable

@@ -11,6 +11,7 @@ Following are the reasons we don't use [drone/autoscaler](https://github.com/dro
 2. It installs and configures the drone agent on a newly provisioned machine itself. This is not desirable for us since we provision agent machines with custom configuration.
 3. It needs to communicate to Docker daemons on all agent machines, which means we must bind `dockerd` to the `eth0` interface on these machines and expose them for reachability.
 4. It has an underlying data storage layer used by all threads to coordinate. Our requirement is not that complex, so we don't need a concurrent & stateful app.
+5. It  waits for builds to finish on an agent marked for destruction. We only destroy agents running 0 builds.
 
 ## Usage
 - env vars, how to tune specific params
@@ -26,6 +27,5 @@ Following are the reasons we don't use [drone/autoscaler](https://github.com/dro
 ## TODO
 - add versioning
 - add debug & info logs so its easy to follow execution & we can get info where manual intervention might be needed in case of failure (eg- failed to resume drone queue, failed to destroy detached ec2 instances, etc.)
-- ensure aws client session is created properly
-- skim through design, dry run
+- ensure aws client session is created properly (in both dev & prod env)
 - write tests

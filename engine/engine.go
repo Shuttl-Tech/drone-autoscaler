@@ -11,6 +11,7 @@ import (
 
 type droneAgentConfig struct {
 	maxBuilds        int
+	minCount         int
 	minRetirementAge time.Duration
 	cluster          cluster.Cluster
 }
@@ -21,19 +22,20 @@ type droneConfig struct {
 }
 
 type Engine struct {
-	drone             *droneConfig
-	probeInterval     time.Duration
+	drone         *droneConfig
+	probeInterval time.Duration
 }
 
 func New(c config.Config, client drone.Client, fleet cluster.Cluster) *Engine {
 	return &Engine{
 		drone: &droneConfig{
-			client: client,
 			agent: &droneAgentConfig{
 				cluster:          fleet,
+				minCount:         c.Agent.MinCount,
 				maxBuilds:        c.Agent.MaxBuilds,
 				minRetirementAge: c.Agent.MinRetirementAge,
 			},
+			client: client,
 		},
 		probeInterval: c.ProbeInterval,
 	}

@@ -25,10 +25,6 @@ type cloud struct {
 	autoscale *autoscaling.AutoScaling
 }
 
-const (
-	StateRunning = "running"
-)
-
 // New returns a new Cluster object
 func New(asgName string) Cluster {
 	sess := session.Must(session.NewSession())
@@ -49,8 +45,12 @@ func (c Cluster) Add(ctx context.Context, count int) error {
 		return err
 	}
 
-	// calculate & set new desired capacity
 	desiredCap := *group.DesiredCapacity + int64(count)
+	log.
+		WithField("old", *group.DesiredCapacity).
+		WithField("new", desiredCap).
+		Infoln("Updating desired capacity of agent autoscaling group")
+
 	_, err = c.client.autoscale.SetDesiredCapacity(
 		&autoscaling.SetDesiredCapacityInput{
 			DesiredCapacity:      aws.Int64(desiredCap),
@@ -68,10 +68,8 @@ func (c Cluster) Add(ctx context.Context, count int) error {
 // Destroy downscales the cluster by nuking the EC2 instances whose IDs
 // are given
 func (c Cluster) Destroy(ctx context.Context, agents []NodeId) error {
+	log.Debugln("Detaching agent nodes from autoscaling group")
 	targets := nodeIdsToAwsStrings(agents)
-
-	// detach target agent nodes from autoscaling group and also reduce
-	// desired cap
 	_, err := c.client.autoscale.DetachInstances(&autoscaling.DetachInstancesInput{
 		AutoScalingGroupName:           aws.String(c.autoscalingGroupName),
 		InstanceIds:                    targets,
@@ -83,7 +81,7 @@ func (c Cluster) Destroy(ctx context.Context, agents []NodeId) error {
 		)
 	}
 
-	// destroy detached ec2 instances
+	log.Debugln("Destroying detached nodes")
 	_, err = c.client.ec2.TerminateInstances(&ec2.TerminateInstancesInput{
 		DryRun:      aws.Bool(false),
 		InstanceIds: targets,
@@ -91,14 +89,13 @@ func (c Cluster) Destroy(ctx context.Context, agents []NodeId) error {
 	if err != nil {
 		log.
 			WithField("instances", agents).
-			WithField("autoscaling-group", c.autoscalingGroupName).
 			Errorln("Failed to terminate agent nodes detached from autoscaling group")
 	}
 	return err
 }
 
 // List returns IDs of running drone agent nodes
-func (c Cluster) List(ctx context.Context, state string) ([]NodeId, error) {
+func (c Cluster) List(ctx context.Context) ([]NodeId, error) {
 	group, err := c.describeSelfAsg()
 	if err != nil {
 		return nil, err

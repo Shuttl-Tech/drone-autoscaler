@@ -9,7 +9,12 @@ type Config struct {
 	// The time interval between 2 consecutive runs of the autoscaler.
 	// Value can be any string parseable by time.ParseDuration()
 	ProbeInterval time.Duration `default:"30s" split_words:"true"`
-	Debug         bool          `default:"false"`
+
+	// Valid values are "pretty" and "json"
+	LogFormat string `default:"json" split_words:"true"`
+
+	// Allows running the app in debug mode for development environments
+	Debug bool `default:"false"`
 
 	Agent struct {
 		// Minimum amount of time for which an Agent node should've been
@@ -21,6 +26,10 @@ type Config struct {
 		// Max number of builds that can run on an agent at any point
 		// of time
 		MaxBuilds int `envconfig:"DRONE_AGENT_MAX_BUILDS" required:"true"`
+
+		// Minimum number of agents to maintain in the cluster,
+		// regardless of the number of builds running
+		MinCount int `envconfig:"DRONE_AGENT_MAX_BUILDS" default:"1"`
 
 		// Name of the AWS autoscaling group containing agent nodes
 		AutoscalingGroup string `envconfig:"DRONE_AGENT_AUTOSCALING_GROUP" required:"true"`

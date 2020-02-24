@@ -30,7 +30,10 @@ func main() {
 
 func setupLogging(c config.Config) {
 	log.SetOutput(os.Stdout)
-	log.SetFormatter(&log.JSONFormatter{})
+
+	if c.LogFormat == "json" {
+		log.SetFormatter(&log.JSONFormatter{})
+	}
 
 	if c.Debug {
 		log.SetLevel(log.DebugLevel)
