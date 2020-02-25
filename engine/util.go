@@ -14,7 +14,7 @@ func contains(arr []cluster.NodeId, subject cluster.NodeId) bool {
 
 // returns list of node IDs from the given Set of nodes
 func keys(set map[cluster.NodeId]struct{}) []cluster.NodeId {
-	res := make([]cluster.NodeId, len(set), len(set))
+	res := make([]cluster.NodeId, 0, len(set))
 	for key, _ := range set {
 		res = append(res, key)
 	}
