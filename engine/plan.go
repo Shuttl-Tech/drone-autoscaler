@@ -56,14 +56,11 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 	ok, err := e.drone.agent.cluster.ScalingActivityInProgress(ctx)
 	if err != nil {
 		return nil, errors.New(
-			fmt.Sprintf(
-				"couldn't determine if any scaling activity is in progress: %v",
-				err,
-			),
+			fmt.Sprintf("failed to check for any scaling activity in progress: %v", err),
 		)
 	}
 	if ok {
-		log.Debugln("Agents cluster has a scaling activity in progress, recommending noop")
+		log.Debugln("Cluster has a scaling activity in progress, recommending noop")
 		return response, nil
 	}
 
@@ -143,13 +140,14 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 			WithField("count", len(expendable)).
 			Debugln("Extra agent nodes detected")
 
-		// TODO p0: Honour agent cluster's minCount.
-		//  If total agents - expendable < minCount, slice expendable list
-		//  Also account for if minCount > total agents (then noop)
-
+		expendable = e.maintainMinAgentCount(runningAgents, expendable)
+		if len(expendable) == 0 {
+			log.Debugln("Found idle agents needed to maintain min count, recommending noop")
+			return response, nil
+		}
 		log.
-			WithField("agents", expendable).
-			Infoln("Recommending downscaling")
+			WithField("ids", expendable).
+			Infoln("Recommending downscaling of agents")
 
 		response.action = actionDownscale
 		response.nodesToDestroy = expendable
@@ -236,4 +234,20 @@ func (e *Engine) listAgentsAboveMinRetirementAge(ctx context.Context, ids []clus
 	}
 	log.WithField("agents", filtered).Debugln("Agents above min retirement")
 	return filtered, nil
+}
+
+func (e *Engine) maintainMinAgentCount(all, expendable []cluster.NodeId) []cluster.NodeId {
+	var (
+		allCount     = len(all)
+		destroyCount = len(expendable)
+		minCount     = e.drone.agent.minCount
+	)
+	if (allCount < minCount) || (allCount < destroyCount) {
+		return []cluster.NodeId{}
+	}
+	if (allCount - destroyCount) < minCount {
+		delta := minCount - (allCount - destroyCount)
+		return expendable[delta:]
+	}
+	return expendable
 }

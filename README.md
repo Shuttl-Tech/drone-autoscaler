@@ -36,3 +36,4 @@ Following are the reasons we don't use [drone/autoscaler](https://github.com/dro
 - cannot resume drone queue right after changing desired capacity of ASG (block until machines come up), also see if we can use autoscale cooldown (https://docs.aws.amazon.com/autoscaling/ec2/userguide/Cooldown.html)
 - test whether this app will be able to handle an ephemeral pod's deployments correctly (short burst of builds, so upscale, then they finish, so downscale)
 - check which objects to pass by value vs reference
+- possibly refactor Plan()
