@@ -27,10 +27,12 @@ Following are the reasons we don't use [drone/autoscaler](https://github.com/dro
 
 ## TODO
 - add versioning
-- add debug & info logs so its easy to follow execution & we can get info where manual intervention might be needed in case of failure (eg- failed to resume drone queue, failed to destroy detached ec2 instances, etc.)
 - ensure aws client session is created properly (in both dev & prod env)
 - write tests
 - handle interrupt signal (SIGINT, SIGTERM, etc) - when signal received, run cleanup task, then shutdown gracefully
 - ensure that anytime CI agent instances are fetched from AWS, we don't fetch info on Terminated instances
 - handle bug where a drone build runs forever (in this case, drone.Queue() will always return some items, even though they're no longer relevant and we can downscale capacity)
 - add more validations in config vars supplied by user (min, max, enum)
+- cannot resume drone queue right after changing desired capacity of ASG (block until machines come up), also see if we can use autoscale cooldown (https://docs.aws.amazon.com/autoscaling/ec2/userguide/Cooldown.html)
+- test whether this app will be able to handle an ephemeral pod's deployments correctly (short burst of builds, so upscale, then they finish, so downscale)
+- check which objects to pass by value vs reference

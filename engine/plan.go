@@ -45,14 +45,27 @@ func (p *Plan) NodesToDestroy() []cluster.NodeId {
 // Plan determines whether there is a need to upscale or downscale the agent
 // cluster based on current capacity and build traffic
 func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
+	// default response is no operation (or noop)
 	response := &Plan{
 		action:         actionNone,
 		upscaleCount:   0,
 		nodesToDestroy: []cluster.NodeId{},
 	}
 
-	// TODO p0: if ASG is not reconciled (desired cap != no. of healthy instances),
-	//  no action. Also log this.
+	// let the cluster autoscale group reconcile before acting any further
+	ok, err := e.drone.agent.cluster.ScalingActivityInProgress(ctx)
+	if err != nil {
+		return nil, errors.New(
+			fmt.Sprintf(
+				"couldn't determine if any scaling activity is in progress: %v",
+				err,
+			),
+		)
+	}
+	if ok {
+		log.Debugln("Agents cluster has a scaling activity in progress, recommending noop")
+		return response, nil
+	}
 
 	stages, err := e.drone.client.Queue()
 	if err != nil {
@@ -96,7 +109,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 			return nil, err
 		}
 		if runningAgentCount == requiredAgentCount {
-			log.Debugln("No scaling action required, recommending NOOP")
+			log.Debugln("No scaling action required, recommending noop")
 			return response, nil
 		}
 
@@ -122,7 +135,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 		if len(expendable) == 0 {
 			// we have newly created agents, so they're not busy yet because it
 			// might be a while before Drone starts assigning them jobs
-			log.Debugln("Idle agents are not past retirement age, recommending NOOP")
+			log.Debugln("Idle agents are not past retirement age, recommending noop")
 			return response, nil
 		}
 
@@ -132,7 +145,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 
 		// TODO p0: Honour agent cluster's minCount.
 		//  If total agents - expendable < minCount, slice expendable list
-		//  Also account for if minCount > total agents (then NOOP)
+		//  Also account for if minCount > total agents (then noop)
 
 		log.
 			WithField("agents", expendable).

@@ -40,7 +40,7 @@ func New(asgName string) Cluster {
 // Add upscales the cluster by adding the given number of instances to
 // the autoscaling group
 func (c Cluster) Add(ctx context.Context, count int) error {
-	group, err := c.describeSelfAsg()
+	group, err := c.describeSelfAsg(ctx)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (c Cluster) Destroy(ctx context.Context, agents []NodeId) error {
 
 // List returns IDs of running drone agent nodes
 func (c Cluster) List(ctx context.Context) ([]NodeId, error) {
-	group, err := c.describeSelfAsg()
+	group, err := c.describeSelfAsg(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +124,19 @@ func (c Cluster) Describe(ctx context.Context, ids []NodeId) ([]*ec2.Instance, e
 	return agents, nil
 }
 
+// ScalingActivityInProgress returns true if number of instances in
+// cluster ASG is not the same as its desired capacity
+func (c Cluster) ScalingActivityInProgress(ctx context.Context) (bool, error) {
+	group, err := c.describeSelfAsg(ctx)
+	if err != nil {
+		return false, err
+	}
+	reconciled := int(*group.DesiredCapacity) == len(group.Instances)
+	return !reconciled, nil
+}
+
 // Describes the drone agent cluster's AWS autoscaling group
-func (c Cluster) describeSelfAsg() (*autoscaling.Group, error) {
+func (c Cluster) describeSelfAsg(ctx context.Context) (*autoscaling.Group, error) {
 	response, err := c.client.autoscale.DescribeAutoScalingGroups(
 		&autoscaling.DescribeAutoScalingGroupsInput{
 			AutoScalingGroupNames: []*string{aws.String(c.autoscalingGroupName)},
