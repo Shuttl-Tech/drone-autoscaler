@@ -33,3 +33,4 @@ Following are the reasons we don't use [drone/autoscaler](https://github.com/dro
 - handle interrupt signal (SIGINT, SIGTERM, etc) - when signal received, run cleanup task, then shutdown gracefully
 - ensure that anytime CI agent instances are fetched from AWS, we don't fetch info on Terminated instances
 - handle bug where a drone build runs forever (in this case, drone.Queue() will always return some items, even though they're no longer relevant and we can downscale capacity)
+- add more validations in config vars supplied by user (min, max, enum)

@@ -51,7 +51,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 		nodesToDestroy: []cluster.NodeId{},
 	}
 
-	// TODO: if ASG is not reconciled (desired cap != no. of healthy instances),
+	// TODO p0: if ASG is not reconciled (desired cap != no. of healthy instances),
 	//  no action. Also log this.
 
 	stages, err := e.drone.client.Queue()
@@ -95,14 +95,23 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		if runningAgentCount == requiredAgentCount {
 			log.Debugln("No scaling action required, recommending NOOP")
 			return response, nil
 		}
 
+		log.
+			WithField("required", requiredAgentCount).
+			WithField("running", runningAgentCount).
+			Debugln("Running agent count is more than required")
+
 		busyAgents := e.listBusyAgents(stages)
 		idleAgents := e.listIdleAgents(runningAgents, busyAgents)
+
+		log.
+			WithField("busy", busyAgents).
+			WithField("idle", idleAgents).
+			Debugln("Determined list of busy and idle agents")
 
 		expendable, err := e.listAgentsAboveMinRetirementAge(ctx, idleAgents)
 		if err != nil {
@@ -117,17 +126,17 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 			return response, nil
 		}
 
-		// we have extra capacity and must downscale
 		log.
 			WithField("count", len(expendable)).
 			Debugln("Extra agent nodes detected")
 
-		// TODO: Honour agent cluster's minCount.
+		// TODO p0: Honour agent cluster's minCount.
 		//  If total agents - expendable < minCount, slice expendable list
+		//  Also account for if minCount > total agents (then NOOP)
 
 		log.
-			WithField("count", len(expendable)).
-			Infoln("Recommending removing agents")
+			WithField("agents", expendable).
+			Infoln("Recommending downscaling")
 
 		response.action = actionDownscale
 		response.nodesToDestroy = expendable
@@ -212,5 +221,6 @@ func (e *Engine) listAgentsAboveMinRetirementAge(ctx context.Context, ids []clus
 			filtered = append(filtered, cluster.NodeId(*agent.InstanceId))
 		}
 	}
+	log.WithField("agents", filtered).Debugln("Agents above min retirement")
 	return filtered, nil
 }
