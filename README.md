@@ -26,7 +26,6 @@ Following are the reasons we don't use [drone/autoscaler](https://github.com/dro
 - release
 
 ## TODO
-- add versioning
 - ensure aws client session is created properly (in both dev & prod env)
 - write tests
 - handle interrupt signal (SIGINT, SIGTERM, etc) - when signal received, run cleanup task, then shutdown gracefully
@@ -37,3 +36,5 @@ Following are the reasons we don't use [drone/autoscaler](https://github.com/dro
 - test whether this app will be able to handle an ephemeral pod's deployments correctly (short burst of builds, so upscale, then they finish, so downscale)
 - check which objects to pass by value vs reference
 - possibly refactor Plan()
+- go type conversion vs casting, what's best for us to convert vars (eg- NodeId -> string, etc)
+- capitalize acronyms (AWS not Aws) in var/func names
