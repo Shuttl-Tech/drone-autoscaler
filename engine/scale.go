@@ -15,13 +15,6 @@ const (
 )
 
 func (e *Engine) Upscale(ctx context.Context, count int) error {
-	log.Infoln("Pausing build queue to add more agents")
-	if err := e.drone.client.QueuePause(); err != nil {
-		return errors.New(
-			fmt.Sprintf("couldn't pause drone queue while upscaling: %v", err),
-		)
-	}
-	defer e.resumeBuildQueue()
 	return e.drone.agent.cluster.Add(ctx, count)
 }
 
@@ -33,10 +26,9 @@ func (e *Engine) Downscale(ctx context.Context, agents []cluster.NodeId) error {
 		)
 	}
 	defer e.resumeBuildQueue()
-
 	log.
-		WithField("agents", agents).
-		Debugln("Destroying agents")
+		WithField("ids", agents).
+		Debugln("Destroying agent nodes")
 	return e.drone.agent.cluster.Destroy(ctx, agents)
 }
 

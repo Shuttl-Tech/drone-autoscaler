@@ -142,7 +142,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 
 		expendable = e.maintainMinAgentCount(runningAgents, expendable)
 		if len(expendable) == 0 {
-			log.Debugln("Found idle agents needed to maintain min count, recommending noop")
+			log.Debugln("Cannot destroy agents due to min count, recommending noop")
 			return response, nil
 		}
 		log.

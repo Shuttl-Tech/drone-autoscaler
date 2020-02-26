@@ -16,7 +16,6 @@ const Version = "1.0.0"
 
 func main() {
 	ctx := context.Background()
-
 	conf, err := config.Load()
 	if err != nil {
 		panic(err)
@@ -24,12 +23,11 @@ func main() {
 
 	setupLogging(conf)
 	client := setupDroneClient(ctx, conf)
-	fleet := setupAgentCluster(conf)
+	fleet := cluster.New(conf.Agent.AutoscalingGroup)
 
 	log.
 		WithField("version", Version).
 		Info("Starting Drone autoscaler")
-
 	engine.New(conf, client, fleet).Start(ctx)
 }
 
@@ -59,8 +57,4 @@ func setupDroneClient(ctx context.Context, c config.Config) drone.Client {
 	uri.Scheme = c.Server.Proto
 	uri.Host = c.Server.Host
 	return drone.NewClient(uri.String(), authenticator)
-}
-
-func setupAgentCluster(c config.Config) cluster.Cluster {
-	return cluster.New(c.Agent.AutoscalingGroup)
 }
