@@ -47,6 +47,10 @@ github.com/jmespath/go-jmespath
 github.com/kelseyhightower/envconfig
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
+# github.com/kr/pretty v0.2.0
+github.com/kr/pretty
+# github.com/kr/text v0.1.0
+github.com/kr/text
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
 # golang.org/x/net v0.0.0-20200202094626-16171245cfb2

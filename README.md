@@ -26,7 +26,9 @@ Following are the reasons we don't use [drone/autoscaler](https://github.com/dro
 - release
 
 ## TODO
-- write tests
+1. Add mocks to complete remaining tests
+
+## TODO (development)
 - ensure aws client session is created properly (in both dev & prod env)
 
 - ensure that anytime CI agent instances are fetched from AWS, we don't fetch info on Terminated instances
