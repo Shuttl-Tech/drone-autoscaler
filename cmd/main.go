@@ -14,10 +14,6 @@ import (
 
 const Version = "1.0.0"
 
-// Git commit SHA set by the compiler into the final binaries.
-// Remains empty in development environments.
-var GitCommit string
-
 func main() {
 	ctx := context.Background()
 
@@ -32,7 +28,6 @@ func main() {
 
 	log.
 		WithField("version", Version).
-		WithField("commit", GitCommit).
 		Info("Starting Drone autoscaler")
 
 	engine.New(conf, client, fleet).Start(ctx)

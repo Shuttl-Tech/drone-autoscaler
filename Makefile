@@ -35,7 +35,6 @@ XC_ARCH ?= amd64
 LD_FLAGS ?= \
 	-s \
 	-w \
-	-X ${PROJECT}/main.GitCommit=${GIT_COMMIT} \
 	-extldflags \"-static\"
 
 # List of tests to run
@@ -62,7 +61,8 @@ define make-xc-target
 			  -a \
 				-o="_build/${NAME}${3}_${1}_${2}" \
 				-ldflags "${LD_FLAGS}" \
-				-tags "${GOTAGS}"
+				-tags "${GOTAGS}" \
+				"${PROJECT}/cmd"
   .PHONY: $1/$2
 
   $1:: $1/$2
@@ -86,7 +86,7 @@ _cleanup:
 # _checksum produces the checksums for the binaries in _build
 _checksum:
 	@cd "${CURRENT_DIR}/_build" && \
-		shasum --algorithm 256 * > ${CURRENT_DIR}/_build/${NAME}_${VERSION}_SHA256SUMS && \
+		shasum --algorithm 256 * > ${CURRENT_DIR}/_build/${NAME}_v${VERSION}_SHA256SUMS && \
 		cd - &>/dev/null
 .PHONY: _checksum
 
