@@ -135,14 +135,19 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 			log.Debugln("Idle agents are not past retirement age, recommending noop")
 			return response, nil
 		}
-
 		log.
-			WithField("count", len(expendable)).
-			Debugln("Extra agent nodes detected")
+			WithField("agents", expendable).
+			Debugln("Found idle agents above min retirement age")
+
+		if e.drone.agent.minCount > 0 {
+			log.
+				WithField("count", e.drone.agent.minCount).
+				Debugln("Need to maintain a minimum number of agents in the cluster")
+		}
 
 		expendable = e.maintainMinAgentCount(runningAgents, expendable)
 		if len(expendable) == 0 {
-			log.Debugln("Cannot destroy agents due to min count, recommending noop")
+			log.Debugln("Cannot destroy agents to maintain min count, recommending noop")
 			return response, nil
 		}
 		log.
@@ -232,7 +237,6 @@ func (e *Engine) listAgentsAboveMinRetirementAge(ctx context.Context, ids []clus
 			filtered = append(filtered, cluster.NodeId(*agent.InstanceId))
 		}
 	}
-	log.WithField("agents", filtered).Debugln("Agents above min retirement")
 	return filtered, nil
 }
 
