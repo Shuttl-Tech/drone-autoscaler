@@ -16,6 +16,10 @@ type Config struct {
 	// Allows running the app in debug mode for development environments
 	Debug bool `default:"false"`
 
+	// If true, the app runs in DRY mode. Only the plan phase is run,
+	// the app doesn't make any actual changes to the infrastructure.
+	Dry bool `default:"false"`
+
 	Agent struct {
 		// Minimum amount of time for which an Agent node should've been
 		// up before it can be considered for destruction during downscaling.

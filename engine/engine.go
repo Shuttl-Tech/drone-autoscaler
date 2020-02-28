@@ -22,12 +22,14 @@ type droneConfig struct {
 }
 
 type Engine struct {
+	dry           bool
 	drone         *droneConfig
 	probeInterval time.Duration
 }
 
 func New(c config.Config, client drone.Client, fleet cluster.Cluster) *Engine {
 	return &Engine{
+		dry: c.Dry,
 		drone: &droneConfig{
 			agent: &droneAgentConfig{
 				cluster:          fleet,
@@ -51,6 +53,15 @@ func (e *Engine) Start(ctx context.Context) {
 			plan, err := e.Plan(ctx)
 			if err != nil {
 				log.WithError(err).Errorln("Failed to create scaling plan")
+				continue
+			}
+
+			if e.dry {
+				log.Infoln("Dry mode is enabled, no further action will be taken")
+				log.
+					WithField("plan", plan).
+					Infoln("Final plan generated")
+				continue
 			}
 
 			if plan.RequiresUpscaling() {

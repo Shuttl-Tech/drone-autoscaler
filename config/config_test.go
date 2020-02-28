@@ -27,6 +27,9 @@ func TestDefaults(t *testing.T) {
 	if got, want := conf.Debug, false; got != want {
 		t.Errorf("Want default debug mode %v, got %v", want, got)
 	}
+	if got, want := conf.Dry, false; got != want {
+		t.Errorf("Want default dry mode %v, got %v", want, got)
+	}
 	if got, want := conf.Agent.MinRetirementAge, time.Minute*10; got != want {
 		t.Errorf("Want default minimum retirement age of agent %v, got %v", want, got)
 	}
@@ -80,6 +83,7 @@ var optional = map[string]string{
 	"SCALER_PROBE_INTERVAL":          "5m",
 	"SCALER_LOG_FORMAT":              "text",
 	"SCALER_DEBUG":                   "true",
+	"SCALER_DRY":                     "true",
 	"DRONE_SERVER_PROTO":             "https",
 	"DRONE_AGENT_MIN_COUNT":          "3",
 	"DRONE_AGENT_MIN_RETIREMENT_AGE": "25m",
@@ -89,6 +93,7 @@ var jsonConfig = []byte(`{
   "ProbeInterval": 300000000000,
   "LogFormat": "text",
   "Debug": true,
+  "Dry": true,
   "Agent": {
     "MinRetirementAge": 1500000000000,
     "MaxBuilds": 10,
