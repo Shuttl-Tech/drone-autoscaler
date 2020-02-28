@@ -19,7 +19,7 @@ func (e *Engine) Upscale(ctx context.Context, count int) error {
 }
 
 func (e *Engine) Downscale(ctx context.Context, agents []cluster.NodeId) error {
-	log.Infoln("Pausing build queue to add more agents")
+	log.Infoln("Pausing build queue to destroy agents")
 	if err := e.drone.client.QueuePause(); err != nil {
 		return errors.New(
 			fmt.Sprintf("couldn't pause drone queue while downscaling: %v", err),

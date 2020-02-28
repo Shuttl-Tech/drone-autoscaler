@@ -1,40 +1,57 @@
 # drone-autoscaler
-This app automatically scales Drone CI agent machines up or down to meet build capacity while optimizing for cost.
+This app scales a [Drone CI](https://drone.io/) agent cluster up or down based on build volume.
 
-## Requirement
-CI/CD in our infrastructure is handled by [Drone](https://drone.io/).
-
-A server/master node schedules build jobs on all agent nodes. These agents are controlled by an AWS autoscaling group. This app automates upscaling & downscaling of the agents based on build traffic.
-
-Following are the reasons we don't use [drone/autoscaler](https://github.com/drone/autoscaler):
-1. As of this writing, it doesn't support AWS autoscaling groups. Instead, it creates standalone ec2 instances.
-2. It installs and configures the drone agent on a newly provisioned machine itself. This is not desirable for us since we provision agent machines with custom configuration.
-3. It needs to communicate to Docker daemons on all agent machines, which means we must bind `dockerd` to the `eth0` interface on these machines and expose them for reachability.
-4. It has an underlying data storage layer used by all threads to coordinate. Our requirement is not that complex, so we don't need a concurrent & stateful app.
-5. It  waits for builds to finish on an agent marked for destruction. We only destroy agents running 0 builds.
+It was created because the [autoscaler provided by Drone](https://github.com/drone/autoscaler) has several limitations:
+1. It doesn't support AWS's Autoscaling Groups (ASGs). Instead, it creates standalone ec2 instances. `drone-autoscaler` is designed to simply manipulate the desired capacity of the ASG that manages your Drone Agents.
+2. It installs & configures an agent on a newly created machine. `drone-autoscaler` assumes that any new machine in the agent ASG is already provisioned.
+3. It waits for upto 60 minutes for running builds to finish on an agent marked for termination. `drone-autoscaler` only terminates nodes that aren't running any builds.
 
 ## Usage
-- env vars, how to tune specific params
-- infra assumptions (host has iam profile/permissions, agents are in aws autoscale)
-- execute binary
-- graceful shutdown
+### Setup
+This app assumes that your Drone agent cluster is managed by an AWS Autoscaling Group.
+
+### Configuration
+The app's behaviour can be configured using various parameters
+
+| Environment variable | Required |
+| --- | ---- |
+| `DRONE_AGENT_MAX_BUILDS` | Yes |
+| `DRONE_AGENT_AUTOSCALING_GROUP` | Yes |
+| `DRONE_SERVER_HOST` | Yes |
+| `DRONE_SERVER_AUTH_TOKEN` | Yes |
+| `SCALER_PROBE_INTERVAL` | No |
+| `SCALER_LOG_FORMAT` | No |
+| `SCALER_DEBUG` | No |
+| `SCALER_DRY` | No |
+| `DRONE_AGENT_MIN_RETIREMENT_AGE` | No |
+| `DRONE_AGENT_MIN_COUNT` | No |
+| `DRONE_SERVER_PROTO` | No |
+
+See [config.go](config/config.go) for parameter descriptions
+
+### Running
+1. Download a pre-compiled binary from the releases page or build it from code using `make dist`.
+2. Set the required configuration parameters via environment variables.
+3. Run the acquired binary.
 
 ## Developing
-- High level architecture
-- test
-- code format
-- release
+The recommended way to run the app in development mode is to use the following configuration:
+```bash
+SCALER_LOG_FORMAT=text
+SCALER_DEBUG=true
 
-## TODO
-1. Add mocks to complete remaining tests
+# Outputs what the app plans to do, without making any changes
+# to the actual infrastructure. This allows you to point the
+# app to the actual agent ASG in development mode without
+# worrying about accidental destruction of nodes. 
+SCALER_DRY=true
 
-## TODO (development)
-- ensure aws client session is created properly (in both dev & prod env)
+# If AWS profile is configured, use these params to load creds
+# and all profile configuration.
+AWS_PROFILE=my_profile
+AWS_SDK_LOAD_CONFIG=true
+```
 
-- ensure that anytime CI agent instances are fetched from AWS, we don't fetch info on Terminated instances
-- handle bug where a drone build runs forever (in this case, drone.Queue() will always return some items, even though they're no longer relevant and we can downscale capacity)
-- handle interrupt signal (SIGINT, SIGTERM, etc) - when signal received, run cleanup task, then shutdown gracefully
-- check which objects to pass by value vs reference
-- go type conversion vs casting, what's best for us to convert vars (eg- NodeId -> string, etc)
-- add more validations in config vars supplied by user (min, max, enum)
-- test whether this app will be able to handle an ephemeral pod's deployments correctly (short burst of builds, so upscale, then they finish, so downscale)
+Run `make fmt` to format the Go code. To run tests, use `make test`.
+
+To create a new release, bump the app version in `main` and run `make dist`.
