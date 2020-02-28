@@ -117,6 +117,10 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 
 		busyAgents := e.listBusyAgents(stages)
 		idleAgents := e.listIdleAgents(runningAgents, busyAgents)
+		if len(idleAgents) < 1 {
+			log.Debugln("No idle agents found, recommending noop")
+			return response, nil
+		}
 
 		log.
 			WithField("busy", busyAgents).

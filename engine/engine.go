@@ -57,10 +57,10 @@ func (e *Engine) Start(ctx context.Context) {
 			}
 
 			if e.dry {
-				log.Infoln("Dry mode is enabled, no further action will be taken")
 				log.
 					WithField("plan", plan).
 					Infoln("Final plan generated")
+				log.Infoln("Dry mode is enabled, no further action will be taken")
 				continue
 			}
 
