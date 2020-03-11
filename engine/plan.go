@@ -71,6 +71,11 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 		)
 	}
 
+	// remove all builds that are pending or running for longer than their
+	// maximum allowed duration
+	stages = filterStages(stages, e.agedPendingBuildFilter)
+	stages = filterStages(stages, e.agedRunningBuildFilter)
+
 	pendingBuildCount, runningBuildCount := e.countBuilds(stages)
 	if pendingBuildCount > 0 {
 		log.
@@ -258,4 +263,42 @@ func (e *Engine) maintainMinAgentCount(all, expendable []cluster.NodeId) []clust
 		return expendable[delta:]
 	}
 	return expendable
+}
+
+// filter func that returns false if a build has been in pending state
+// for longer than allowed duration
+func (e *Engine) agedPendingBuildFilter(stage *drone.Stage) bool {
+	// a negative value means no upper bound is enforced on the pending
+	// build's duration of existence
+	if e.drone.build.pendingMaxDuration < time.Duration(0) {
+		return true
+	}
+	if stage.Status == drone.StatusPending {
+		now := time.Now().UTC()
+		upper := time.
+			Unix(stage.Created, 0).
+			Add(e.drone.build.pendingMaxDuration).
+			UTC()
+		return now.Before(upper)
+	}
+	return true
+}
+
+// filter func that returns false if a build has been in running state
+// for longer than allowed duration
+func (e *Engine) agedRunningBuildFilter(stage *drone.Stage) bool {
+	// a negative value means no upper bound is enforced on the running
+	// build's duration of existence
+	if e.drone.build.runningMaxDuration < time.Duration(0) {
+		return true
+	}
+	if stage.Status == drone.StatusRunning {
+		now := time.Now().UTC()
+		upper := time.
+			Unix(stage.Started, 0).
+			Add(e.drone.build.runningMaxDuration).
+			UTC()
+		return now.Before(upper)
+	}
+	return true
 }

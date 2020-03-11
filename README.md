@@ -26,6 +26,8 @@ The app's behaviour can be configured using various parameters
 | `DRONE_AGENT_MIN_RETIREMENT_AGE` | No |
 | `DRONE_AGENT_MIN_COUNT` | No |
 | `DRONE_SERVER_PROTO` | No |
+| `DRONE_BUILD_PENDING_MAX_DURATION` | No |
+| `DRONE_BUILD_RUNNING_MAX_DURATION` | No |
 
 See [config.go](config/config.go) for parameter descriptions
 
@@ -39,6 +41,9 @@ The recommended way to run the app in development mode is to use the following c
 ```bash
 SCALER_LOG_FORMAT=text
 SCALER_DEBUG=true
+
+DRONE_BUILD_PENDING_MAX_DURATION="4h"
+DRONE_BUILD_RUNNING_MAX_DURATION="1h"
 
 # Outputs what the app plans to do, without making any changes
 # to the actual infrastructure. This allows you to point the

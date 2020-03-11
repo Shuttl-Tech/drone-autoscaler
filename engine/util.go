@@ -1,6 +1,24 @@
 package engine
 
-import "github.com/Shuttl-Tech/drone-autoscaler/cluster"
+import (
+	"github.com/Shuttl-Tech/drone-autoscaler/cluster"
+	"github.com/drone/drone-go/drone"
+)
+
+// StageFilter is a filter function applied to a single drone stage
+type StageFilter func(stage *drone.Stage) bool
+
+// returns the resulting list of stages after applying a StageFilter
+// func to the initially passed list
+func filterStages(stages []*drone.Stage, f StageFilter) []*drone.Stage {
+	res := make([]*drone.Stage, 0, len(stages))
+	for _, s := range stages {
+		if f(s) {
+			res = append(res, s)
+		}
+	}
+	return res
+}
 
 // returns true if the given list of Node IDs contains the target Id
 func contains(arr []cluster.NodeId, subject cluster.NodeId) bool {

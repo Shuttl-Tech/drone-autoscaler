@@ -4,6 +4,7 @@ import (
 	"github.com/Shuttl-Tech/drone-autoscaler/cluster"
 	"github.com/drone/drone-go/drone"
 	"testing"
+	"time"
 )
 
 func TestEngine_CountBuilds(t *testing.T) {
@@ -95,8 +96,8 @@ func TestEngine_ListBusyAgents(t *testing.T) {
 			Status:  drone.StatusError,
 		},
 		{
-			Status:  drone.StatusRunning,
 			Machine: "i-100",
+			Status:  drone.StatusRunning,
 		},
 	}
 	want := []cluster.NodeId{"i-100", "i-130"}
@@ -155,5 +156,79 @@ func TestEngine_MaintainMinAgentCount(t *testing.T) {
 	e.drone.agent.minCount = len(all) + 1
 	if got := e.maintainMinAgentCount(all, []cluster.NodeId{"i-100"}); len(got) != 0 {
 		t.Errorf("Want 0 nodes, got %v", got)
+	}
+}
+
+func TestPlan_AgedPendingBuildFilter(t *testing.T) {
+	now := time.Now().UTC()
+	s := &drone.Stage{}
+	e := Engine{
+		drone: &droneConfig{
+			build: &droneBuildConfig{
+				pendingMaxDuration: time.Duration(-1),
+			},
+		},
+	}
+	if !e.agedPendingBuildFilter(&drone.Stage{}) {
+		t.Error("Expected true when pending max duration is negative")
+	}
+
+	e.drone.build.pendingMaxDuration = time.Duration(0)
+	s.Status = drone.StatusRunning
+	if !e.agedPendingBuildFilter(s) {
+		t.Error("Expected true when build is not in pending state")
+	}
+
+	s.Status = drone.StatusPending
+	s.Created = now.Add(time.Second * -10).Unix()
+	if e.agedPendingBuildFilter(s) {
+		t.Error("Expected false when pending build max duration is 0 secs")
+	}
+
+	e.drone.build.pendingMaxDuration = time.Minute * 1
+	if !e.agedPendingBuildFilter(s) {
+		t.Error("Expected true when pending build max duration is not reached")
+	}
+
+	e.drone.build.pendingMaxDuration = time.Second * 5
+	if e.agedPendingBuildFilter(s) {
+		t.Error("Expected false once pending build max duration is exceeded")
+	}
+}
+
+func TestPlan_AgedRunningBuildFilter(t *testing.T) {
+	now := time.Now().UTC()
+	s := &drone.Stage{}
+	e := Engine{
+		drone: &droneConfig{
+			build: &droneBuildConfig{
+				runningMaxDuration: time.Duration(-1),
+			},
+		},
+	}
+	if !e.agedRunningBuildFilter(&drone.Stage{}) {
+		t.Error("Expected true when running max duration is negative")
+	}
+
+	e.drone.build.runningMaxDuration = time.Duration(0)
+	s.Status = drone.StatusPending
+	if !e.agedRunningBuildFilter(s) {
+		t.Error("Expected true when build is not in running state")
+	}
+
+	s.Status = drone.StatusRunning
+	s.Started = now.Add(time.Second * -10).Unix()
+	if e.agedRunningBuildFilter(s) {
+		t.Error("Expected false when running build max duration is 0 secs")
+	}
+
+	e.drone.build.runningMaxDuration = time.Minute * 1
+	if !e.agedRunningBuildFilter(s) {
+		t.Error("Expected true when running build max duration is not reached")
+	}
+
+	e.drone.build.runningMaxDuration = time.Second * 5
+	if e.agedRunningBuildFilter(s) {
+		t.Error("Expected false once running build max duration is exceeded")
 	}
 }
