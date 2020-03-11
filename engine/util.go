@@ -10,14 +10,18 @@ type StageFilter func(stage *drone.Stage) bool
 
 // returns the resulting list of stages after applying a StageFilter
 // func to the initially passed list
-func filterStages(stages []*drone.Stage, f StageFilter) []*drone.Stage {
+// also returns the list of stages discarded
+func filterStages(stages []*drone.Stage, f StageFilter) ([]*drone.Stage, []*drone.Stage) {
 	res := make([]*drone.Stage, 0, len(stages))
+	discarded := make([]*drone.Stage, 0, len(stages))
 	for _, s := range stages {
 		if f(s) {
 			res = append(res, s)
+		} else {
+			discarded = append(discarded, s)
 		}
 	}
-	return res
+	return res, discarded
 }
 
 // returns true if the given list of Node IDs contains the target Id

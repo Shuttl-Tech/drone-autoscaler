@@ -45,7 +45,12 @@ func (p *Plan) NodesToDestroy() []cluster.NodeId {
 // Plan determines whether there is a need to upscale or downscale the agent
 // cluster based on current capacity and build traffic
 func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
-	// default response is no operation (or noop)
+	var (
+		stages    []*drone.Stage
+		discarded []*drone.Stage
+	)
+
+	// default response is no operation (noop)
 	response := &Plan{
 		action:         actionNone,
 		upscaleCount:   0,
@@ -64,7 +69,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 		return response, nil
 	}
 
-	stages, err := e.drone.client.Queue()
+	stages, err = e.drone.client.Queue()
 	if err != nil {
 		return nil, errors.New(
 			fmt.Sprintf("couldn't fetch build queue from drone: %v", err),
@@ -73,8 +78,23 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 
 	// remove all builds that are pending or running for longer than their
 	// maximum allowed duration
-	stages = filterStages(stages, e.agedPendingBuildFilter)
-	stages = filterStages(stages, e.agedRunningBuildFilter)
+	stages, discarded = filterStages(stages, e.agedPendingBuildFilter)
+	if len(discarded) > 0 {
+		for _, b := range discarded {
+			log.
+				WithField("build", b).
+				Warnln("Pending build is older than max duration, ignoring")
+		}
+	}
+
+	stages, discarded = filterStages(stages, e.agedRunningBuildFilter)
+	if len(discarded) > 0 {
+		for _, b := range discarded {
+			log.
+				WithField("build", b).
+				Warnln("Running build is older than max duration, ignoring")
+		}
+	}
 
 	pendingBuildCount, runningBuildCount := e.countBuilds(stages)
 	if pendingBuildCount > 0 {
