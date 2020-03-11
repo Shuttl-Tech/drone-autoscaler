@@ -103,10 +103,14 @@ func TestEngine_ListBusyAgents(t *testing.T) {
 	want := []cluster.NodeId{"i-100", "i-130"}
 
 	got := e.listBusyAgents(stages)
-	for i := 0; i < len(want); i++ {
-		if want[i] != got[i] {
-			t.Errorf("Want %s, got %s at index %d", want[i], got[i], i)
-		}
+	if len(want) != len(got) {
+		t.Fatalf("Want list of %d IDs, got %d", len(want), len(got))
+	}
+	if (want[0] != got[0]) && (want[0] != got[1]) {
+		t.Errorf("Want %s in response %v", want[0], got)
+	}
+	if (want[1] != got[0]) && (want[1] != got[1]) {
+		t.Errorf("Want %s in response %v", want[1], got)
 	}
 }
 

@@ -73,6 +73,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 
 	// remove all builds that are pending or running for longer than their
 	// maximum allowed duration
+	// TODO: log stages that were discarded because they exceeded max duration
 	stages = filterStages(stages, e.agedPendingBuildFilter)
 	stages = filterStages(stages, e.agedRunningBuildFilter)
 
@@ -154,6 +155,9 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 				Debugln("Need to maintain a minimum number of agents in the cluster")
 		}
 
+		// TODO p0: If min agent count > current desired count of agent cluster,
+		//  generate a plan to upscale. At present, we're ignoring this condition
+		//  even though it is actionable.
 		expendable = e.maintainMinAgentCount(runningAgents, expendable)
 		if len(expendable) == 0 {
 			log.Debugln("Cannot destroy agents to maintain min count, recommending noop")
