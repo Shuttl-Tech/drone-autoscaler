@@ -30,6 +30,12 @@ func TestDefaults(t *testing.T) {
 	if got, want := conf.Dry, false; got != want {
 		t.Errorf("Want default dry mode %v, got %v", want, got)
 	}
+	if got, want := conf.Build.PendingMaxDuration, time.Second*-1; got != want {
+		t.Errorf("Want default pending build max duration %v, got %v", want, got)
+	}
+	if got, want := conf.Build.RunningMaxDuration, time.Second*-1; got != want {
+		t.Errorf("Want default running build max duration %v, got %v", want, got)
+	}
 	if got, want := conf.Agent.MinRetirementAge, time.Minute*10; got != want {
 		t.Errorf("Want default minimum retirement age of agent %v, got %v", want, got)
 	}
@@ -80,13 +86,15 @@ var required = map[string]string{
 }
 
 var optional = map[string]string{
-	"SCALER_PROBE_INTERVAL":          "5m",
-	"SCALER_LOG_FORMAT":              "text",
-	"SCALER_DEBUG":                   "true",
-	"SCALER_DRY":                     "true",
-	"DRONE_SERVER_PROTO":             "https",
-	"DRONE_AGENT_MIN_COUNT":          "3",
-	"DRONE_AGENT_MIN_RETIREMENT_AGE": "25m",
+	"SCALER_PROBE_INTERVAL":            "5m",
+	"SCALER_LOG_FORMAT":                "text",
+	"SCALER_DEBUG":                     "true",
+	"SCALER_DRY":                       "true",
+	"DRONE_SERVER_PROTO":               "https",
+	"DRONE_AGENT_MIN_COUNT":            "3",
+	"DRONE_AGENT_MIN_RETIREMENT_AGE":   "25m",
+	"DRONE_BUILD_PENDING_MAX_DURATION": "4h",
+	"DRONE_BUILD_RUNNING_MAX_DURATION": "1h",
 }
 
 var jsonConfig = []byte(`{
@@ -94,6 +102,10 @@ var jsonConfig = []byte(`{
   "LogFormat": "text",
   "Debug": true,
   "Dry": true,
+  "Build": {
+    "PendingMaxDuration": 14400000000000,
+    "RunningMaxDuration": 3600000000000
+  },
   "Agent": {
     "MinRetirementAge": 1500000000000,
     "MaxBuilds": 10,

@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+type droneBuildConfig struct {
+	pendingMaxDuration time.Duration
+	runningMaxDuration time.Duration
+}
+
 type droneAgentConfig struct {
 	maxBuilds        int
 	minCount         int
@@ -18,6 +23,7 @@ type droneAgentConfig struct {
 
 type droneConfig struct {
 	client drone.Client
+	build  *droneBuildConfig
 	agent  *droneAgentConfig
 }
 
@@ -31,13 +37,17 @@ func New(c config.Config, client drone.Client, fleet cluster.Cluster) *Engine {
 	return &Engine{
 		dry: c.Dry,
 		drone: &droneConfig{
+			client: client,
+			build: &droneBuildConfig{
+				pendingMaxDuration: c.Build.PendingMaxDuration,
+				runningMaxDuration: c.Build.RunningMaxDuration,
+			},
 			agent: &droneAgentConfig{
 				cluster:          fleet,
 				minCount:         c.Agent.MinCount,
 				maxBuilds:        c.Agent.MaxBuilds,
 				minRetirementAge: c.Agent.MinRetirementAge,
 			},
-			client: client,
 		},
 		probeInterval: c.ProbeInterval,
 	}
