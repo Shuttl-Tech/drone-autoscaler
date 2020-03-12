@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Shuttl-Tech/drone-autoscaler/cluster"
@@ -18,6 +19,24 @@ type Plan struct {
 	action         string
 	upscaleCount   int
 	nodesToDestroy []cluster.NodeId
+}
+
+// serialization methods for better representation of Plan in logs
+func (p *Plan) String() string {
+	return fmt.Sprintf(
+		"action=%v, upscaleCount=%v, nodesToDestroy=%v",
+		p.action,
+		p.upscaleCount,
+		p.nodesToDestroy,
+	)
+}
+
+func (p *Plan) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"action":         p.action,
+		"upscaleCount":   p.upscaleCount,
+		"nodesToDestroy": p.nodesToDestroy,
+	})
 }
 
 // RequiresUpscaling returns true when more agents must be added
