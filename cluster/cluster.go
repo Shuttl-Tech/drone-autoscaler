@@ -68,30 +68,23 @@ func (c Cluster) Add(ctx context.Context, count int) error {
 // Destroy downscales the cluster by nuking the EC2 instances whose IDs
 // are given
 func (c Cluster) Destroy(ctx context.Context, agents []NodeId) error {
-	log.Debugln("Detaching agent nodes from autoscaling group")
-	targets := nodeIdsToAwsStrings(agents)
-	_, err := c.client.autoscale.DetachInstances(&autoscaling.DetachInstancesInput{
-		AutoScalingGroupName:           aws.String(c.autoscalingGroupName),
-		InstanceIds:                    targets,
-		ShouldDecrementDesiredCapacity: aws.Bool(true),
-	})
-	if err != nil {
-		return errors.New(
-			fmt.Sprintf("failed to detach instances from autoscale group: %v", err),
-		)
-	}
-
-	log.Debugln("Destroying detached nodes")
-	_, err = c.client.ec2.TerminateInstances(&ec2.TerminateInstancesInput{
-		DryRun:      aws.Bool(false),
-		InstanceIds: targets,
-	})
-	if err != nil {
+	for _, agent := range agents {
 		log.
-			WithField("instances", agents).
-			Errorln("Failed to terminate agent nodes detached from autoscaling group")
+			WithField("id", agent).
+			Debugln("Terminating agent node")
+
+		i := &autoscaling.TerminateInstanceInAutoScalingGroupInput{
+			InstanceId:                     aws.String(string(agent)),
+			ShouldDecrementDesiredCapacity: aws.Bool(true),
+		}
+		if _, err := c.client.autoscale.TerminateInstanceInAutoScalingGroup(i); err != nil {
+			log.
+				WithField("id", agent).
+				Errorln("Failed to terminate agent")
+			return err
+		}
 	}
-	return err
+	return nil
 }
 
 // List returns IDs of running drone agent nodes
