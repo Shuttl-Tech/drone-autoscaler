@@ -83,6 +83,26 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 		return response, nil
 	}
 
+	runningAgents, err := e.drone.agent.cluster.List(ctx)
+	if err != nil {
+		return nil, errors.New(
+			fmt.Sprintf("couldn't fetch list of running agent nodes: %v", err),
+		)
+	}
+
+	runningAgentCount := len(runningAgents)
+	if runningAgentCount < e.drone.agent.minCount {
+		// reconcile the agent count to the minimum number to maintain
+		c := e.drone.agent.minCount - runningAgentCount
+		log.
+			WithField("count", c).
+			Info("Agent cluster size is below minimum required, recommending scale-up")
+
+		response.action = actionUpscale
+		response.upscaleCount = c
+		return response, nil
+	}
+
 	stages, err := e.drone.client.Queue()
 	if err != nil {
 		return nil, errors.New(
@@ -118,14 +138,6 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 	} else {
 		log.Debugln("Checking for any under-utilized capacity")
 
-		runningAgents, err := e.drone.agent.cluster.List(ctx)
-		if err != nil {
-			return nil, errors.New(
-				fmt.Sprintf("couldn't fetch list of running agent nodes: %v", err),
-			)
-		}
-
-		runningAgentCount := len(runningAgents)
 		requiredAgentCount, err := e.calcRequiredAgentCount(runningBuildCount)
 		if err != nil {
 			return nil, err
@@ -174,9 +186,6 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 				Debugln("Need to maintain a minimum number of agents in the cluster")
 		}
 
-		// TODO p0: If min agent count > current desired count of agent cluster,
-		//  generate a plan to upscale. At present, we're ignoring this condition
-		//  even though it is actionable.
 		expendable = e.maintainMinAgentCount(runningAgents, expendable)
 		if len(expendable) == 0 {
 			log.Debugln("Cannot destroy agents to maintain min count, recommending noop")
