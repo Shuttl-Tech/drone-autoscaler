@@ -6,21 +6,28 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
+	"github.com/aws/aws-sdk-go/service/autoscaling/autoscalingiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	log "github.com/sirupsen/logrus"
 )
 
 type cluster struct {
 	ctx       context.Context
 	asgName   string
-	ec2       *ec2.EC2
-	autoscale *autoscaling.AutoScaling
+	ec2       ec2iface.EC2API
+	autoscale autoscalingiface.AutoScalingAPI
 }
 
 type NodeId string
 
 // New returns a new Cluster object
-func New(ctx context.Context, asgName string, ec2 *ec2.EC2, asg *autoscaling.AutoScaling) Cluster {
+func New(
+	ctx context.Context,
+	asgName string,
+	ec2 ec2iface.EC2API,
+	asg autoscalingiface.AutoScalingAPI,
+) Cluster {
 	return cluster{
 		ctx:       ctx,
 		ec2:       ec2,
@@ -98,7 +105,7 @@ func (c cluster) List(ctx context.Context) ([]NodeId, error) {
 func (c cluster) Describe(ctx context.Context, ids []NodeId) ([]*ec2.Instance, error) {
 	agents := make([]*ec2.Instance, 0, len(ids))
 	response, err := c.ec2.DescribeInstances(&ec2.DescribeInstancesInput{
-		InstanceIds: nodeIdsToAwsStrings(ids),
+		InstanceIds: NodeIdsToAwsStrings(ids),
 	})
 	if err != nil {
 		return nil, err
