@@ -5,6 +5,9 @@ import (
 	"github.com/Shuttl-Tech/drone-autoscaler/cluster"
 	"github.com/Shuttl-Tech/drone-autoscaler/config"
 	"github.com/Shuttl-Tech/drone-autoscaler/engine"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/drone/drone-go/drone"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -23,7 +26,7 @@ func main() {
 
 	setupLogging(conf)
 	client := setupDroneClient(ctx, conf)
-	fleet := cluster.New(conf.Agent.AutoscalingGroup)
+	fleet := setupAgentClusterClient(ctx, conf)
 
 	log.
 		WithField("version", Version).
@@ -57,4 +60,14 @@ func setupDroneClient(ctx context.Context, c config.Config) drone.Client {
 	uri.Scheme = c.Server.Proto
 	uri.Host = c.Server.Host
 	return drone.NewClient(uri.String(), authenticator)
+}
+
+func setupAgentClusterClient(ctx context.Context, c config.Config) cluster.Cluster {
+	sess := session.Must(session.NewSession())
+	return cluster.New(
+		ctx,
+		c.Agent.AutoscalingGroup,
+		ec2.New(sess),
+		autoscaling.New(sess),
+	)
 }
