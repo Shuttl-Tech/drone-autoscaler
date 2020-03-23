@@ -25,7 +25,7 @@ func TestNodeIdsToAwsStrings(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		got := nodeIdsToAwsStrings(test.c)
+		got := NodeIdsToAwsStrings(test.c)
 		for i := 0; i < len(test.want); i++ {
 			if *got[i] != *test.want[i] {
 				t.Errorf("Want aws string %v, got %v at index %d", *test.want[i], *got[i], i)
