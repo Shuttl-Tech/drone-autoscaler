@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Removed
 - `ctx` from `cluster` object
 
+### Changed
+- Refactored to use `fmt.Errorf(...)` instead of `errors.New(fmt.Sprintf(...))` 
+
 ## [1.0.1] - 2020-03-23
 
 ### Added

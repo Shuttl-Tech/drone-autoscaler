@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/Shuttl-Tech/drone-autoscaler/cluster"
 	log "github.com/sirupsen/logrus"
@@ -21,9 +20,7 @@ func (e *Engine) Upscale(ctx context.Context, count int) error {
 func (e *Engine) Downscale(ctx context.Context, agents []cluster.NodeId) error {
 	log.Infoln("Pausing build queue to destroy agents")
 	if err := e.drone.client.QueuePause(); err != nil {
-		return errors.New(
-			fmt.Sprintf("couldn't pause drone queue while downscaling: %v", err),
-		)
+		return fmt.Errorf("couldn't pause drone queue while downscaling: %v", err)
 	}
 	defer e.resumeBuildQueue()
 	log.
@@ -40,8 +37,6 @@ func (e *Engine) resumeBuildQueue() {
 	// stuck if the queue was previously paused, so the app must fail
 	// immediately and queue must be resumed manually before re-starting it.
 	if err := e.drone.client.QueueResume(); err != nil {
-		panic(
-			errors.New(fmt.Sprintf("failed to resume build queue: %v", err)),
-		)
+		panic(fmt.Errorf("failed to resume build queue: %v", err))
 	}
 }
