@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.0.2] - 2020-04-07
 
 ### Added
-- Context cancellation
+- Graceful shutdown upon receiving interrupt
 
 ### Removed
 - `ctx` from `cluster` object

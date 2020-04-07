@@ -13,13 +13,20 @@ import (
 	"golang.org/x/oauth2"
 	"net/url"
 	"os"
+	"os/signal"
 )
 
 const Version = "1.0.2"
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, os.Interrupt)
+	go func() {
+		<-signalCh
+		cancel()
+	}()
 
 	conf, err := config.Load()
 	if err != nil {
