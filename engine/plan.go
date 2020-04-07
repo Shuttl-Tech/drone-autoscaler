@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/Shuttl-Tech/drone-autoscaler/cluster"
 	"github.com/drone/drone-go/drone"
@@ -74,9 +73,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 	// let the cluster autoscale group reconcile before acting any further
 	ok, err := e.drone.agent.cluster.ScalingActivityInProgress(ctx)
 	if err != nil {
-		return nil, errors.New(
-			fmt.Sprintf("failed to check for any scaling activity in progress: %v", err),
-		)
+		return nil, fmt.Errorf("failed to check for any scaling activity in progress: %v", err)
 	}
 	if ok {
 		log.Debugln("Cluster has a scaling activity in progress, recommending noop")
@@ -85,9 +82,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 
 	runningAgents, err := e.drone.agent.cluster.List(ctx)
 	if err != nil {
-		return nil, errors.New(
-			fmt.Sprintf("couldn't fetch list of running agent nodes: %v", err),
-		)
+		return nil, fmt.Errorf("couldn't fetch list of running agent nodes: %v", err)
 	}
 
 	runningAgentCount := len(runningAgents)
@@ -105,9 +100,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 
 	stages, err := e.drone.client.Queue()
 	if err != nil {
-		return nil, errors.New(
-			fmt.Sprintf("couldn't fetch build queue from drone: %v", err),
-		)
+		return nil, fmt.Errorf("couldn't fetch build queue from drone: %v", err)
 	}
 
 	// remove all builds that are pending or running for longer than their
@@ -166,9 +159,7 @@ func (e *Engine) Plan(ctx context.Context) (*Plan, error) {
 
 		expendable, err := e.listAgentsAboveMinRetirementAge(ctx, idleAgents)
 		if err != nil {
-			return nil, errors.New(
-				fmt.Sprintf("couldn't fetch agents above retirement age: %v", err),
-			)
+			return nil, fmt.Errorf("couldn't fetch agents above retirement age: %v", err)
 		}
 		if len(expendable) == 0 {
 			// we have newly created agents, so they're not busy yet because it
@@ -218,9 +209,7 @@ func (e *Engine) countBuilds(stages []*drone.Stage) (pending, running int) {
 func (e *Engine) calcRequiredAgentCount(buildCount int) (int, error) {
 	maxCountPerAgent := e.drone.agent.maxBuilds
 	if maxCountPerAgent < 1 {
-		return 0, errors.New(
-			fmt.Sprintf("max builds per agent cannot be %d", maxCountPerAgent),
-		)
+		return 0, fmt.Errorf("max builds per agent cannot be %d", maxCountPerAgent)
 	}
 	res := math.Ceil(float64(buildCount) / float64(maxCountPerAgent))
 	return int(res), nil

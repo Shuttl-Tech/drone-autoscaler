@@ -57,6 +57,7 @@ func (e *Engine) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			log.Infoln("Shutting down gracefully")
 			return
 
 		case <-time.After(e.probeInterval):

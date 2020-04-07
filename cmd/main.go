@@ -13,12 +13,21 @@ import (
 	"golang.org/x/oauth2"
 	"net/url"
 	"os"
+	"os/signal"
 )
 
-const Version = "1.0.1"
+const Version = "1.0.2"
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, os.Interrupt)
+	go func() {
+		<-signalCh
+		cancel()
+	}()
+
 	conf, err := config.Load()
 	if err != nil {
 		panic(err)
@@ -26,7 +35,7 @@ func main() {
 
 	setupLogging(conf)
 	client := setupDroneClient(ctx, conf)
-	fleet := setupAgentClusterClient(ctx, conf)
+	fleet := setupAgentClusterClient(conf)
 
 	log.
 		WithField("version", Version).
@@ -62,10 +71,9 @@ func setupDroneClient(ctx context.Context, c config.Config) drone.Client {
 	return drone.NewClient(uri.String(), authenticator)
 }
 
-func setupAgentClusterClient(ctx context.Context, c config.Config) cluster.Cluster {
+func setupAgentClusterClient(c config.Config) cluster.Cluster {
 	sess := session.Must(session.NewSession())
 	return cluster.New(
-		ctx,
 		c.Agent.AutoscalingGroup,
 		ec2.New(sess),
 		autoscaling.New(sess),

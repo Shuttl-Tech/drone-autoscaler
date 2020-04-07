@@ -34,7 +34,7 @@ func TestPlan_ScalingInProgress(t *testing.T) {
 			},
 		}, nil)
 
-	c := cluster.New(context.TODO(), "test-asg", nil, asg)
+	c := cluster.New("test-asg", nil, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			agent: &droneAgentConfig{cluster: c},
@@ -106,7 +106,7 @@ func TestPlan_BelowMinRetirement(t *testing.T) {
 			{Status: drone.StatusRunning, Machine: "i-001"},
 		}, nil)
 
-	c := cluster.New(context.TODO(), "test-asg", ec2Client, asg)
+	c := cluster.New("test-asg", ec2Client, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			build: &droneBuildConfig{
@@ -180,7 +180,7 @@ func TestPlan_MinAgentCount(t *testing.T) {
 		Queue().
 		Return([]*drone.Stage{}, nil)
 
-	c := cluster.New(context.TODO(), "test-asg", ec2Client, asg)
+	c := cluster.New("test-asg", ec2Client, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			build: &droneBuildConfig{
@@ -240,7 +240,7 @@ func TestPlan_NoExtra(t *testing.T) {
 			{Status: drone.StatusRunning},
 		}, nil)
 
-	c := cluster.New(context.TODO(), "test-asg", nil, asg)
+	c := cluster.New("test-asg", nil, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			client: droneClient,
@@ -299,7 +299,7 @@ func TestPlan_NoneIdle(t *testing.T) {
 			{Status: drone.StatusRunning, Machine: "i-002"},
 		}, nil)
 
-	c := cluster.New(context.TODO(), "test-asg", nil, asg)
+	c := cluster.New("test-asg", nil, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			client: droneClient,
@@ -345,7 +345,7 @@ func TestPlan_BelowMinCount(t *testing.T) {
 		}, nil).
 		Times(2)
 
-	c := cluster.New(context.TODO(), "test-asg", nil, asg)
+	c := cluster.New("test-asg", nil, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			agent: &droneAgentConfig{cluster: c, minCount: 3},
@@ -418,7 +418,7 @@ func TestPlan_PendingBuilds(t *testing.T) {
 			nil,
 		)
 
-	c := cluster.New(context.TODO(), "test-asg", nil, asg)
+	c := cluster.New("test-asg", nil, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			client: droneClient,
@@ -491,7 +491,7 @@ func TestPlan_ExtraDestroyable(t *testing.T) {
 		Queue().
 		Return([]*drone.Stage{}, nil)
 
-	c := cluster.New(context.TODO(), "test-asg", ec2Client, asg)
+	c := cluster.New("test-asg", ec2Client, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			build: &droneBuildConfig{

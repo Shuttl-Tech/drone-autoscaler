@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
@@ -13,7 +12,6 @@ import (
 )
 
 type cluster struct {
-	ctx       context.Context
 	asgName   string
 	ec2       ec2iface.EC2API
 	autoscale autoscalingiface.AutoScalingAPI
@@ -22,14 +20,8 @@ type cluster struct {
 type NodeId string
 
 // New returns a new Cluster object
-func New(
-	ctx context.Context,
-	asgName string,
-	ec2 ec2iface.EC2API,
-	asg autoscalingiface.AutoScalingAPI,
-) Cluster {
+func New(asgName string, ec2 ec2iface.EC2API, asg autoscalingiface.AutoScalingAPI) Cluster {
 	return cluster{
-		ctx:       ctx,
 		ec2:       ec2,
 		autoscale: asg,
 		asgName:   asgName,
@@ -57,9 +49,7 @@ func (c cluster) Add(ctx context.Context, count int) error {
 		},
 	)
 	if err != nil {
-		return errors.New(
-			fmt.Sprintf("failed to update autoscale group desired capacity: %v", err),
-		)
+		return fmt.Errorf("failed to update autoscale group desired capacity: %v", err)
 	}
 	return nil
 }
@@ -135,9 +125,7 @@ func (c cluster) describeSelfAsg(ctx context.Context) (*autoscaling.Group, error
 		},
 	)
 	if err != nil {
-		return nil, errors.New(
-			fmt.Sprintf("failed to fetch info about agent autoscale group: %v", err),
-		)
+		return nil, fmt.Errorf("failed to fetch info about agent autoscale group: %v", err)
 	}
 	return response.AutoScalingGroups[0], nil
 }

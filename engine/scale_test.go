@@ -32,7 +32,7 @@ func TestScale_Upscale(t *testing.T) {
 		Return(nil, nil).
 		After(describe)
 
-	c := cluster.New(context.TODO(), "test-asg", nil, asg)
+	c := cluster.New("test-asg", nil, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			agent: &droneAgentConfig{cluster: c},
@@ -69,7 +69,7 @@ func TestScale_Downscale(t *testing.T) {
 
 	droneClient.EXPECT().QueueResume().Return(nil).After(downscale)
 
-	c := cluster.New(context.TODO(), "test-asg", nil, asg)
+	c := cluster.New("test-asg", nil, asg)
 	e := &Engine{
 		drone: &droneConfig{
 			client: droneClient,
