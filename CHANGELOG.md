@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.0.1] - 2020-03-23
 
 ### Added
+- Context cancellation
+
+### Removed
+- `ctx` from `cluster` object
+
+## [1.0.1] - 2020-03-23
+
+### Added
 - Mock tests
 - `Cluster` interface
 - Dependency injection in `cluster.New()` to allow passing ec2 & autoscaling sdk objects from outside.

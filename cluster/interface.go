@@ -10,19 +10,19 @@ import (
 type Cluster interface {
 	// Add upscales the cluster by adding the given number of instances
 	// to the autoscaling group
-	Add(ctx context.Context, count int) error
+	Add(context.Context, int) error
 
 	// Destroy downscales the cluster by nuking the EC2 instances whose IDs
 	// are given
-	Destroy(ctx context.Context, agents []NodeId) error
+	Destroy(context.Context, []NodeId) error
 
 	// List returns IDs of running drone agent nodes
-	List(ctx context.Context) ([]NodeId, error)
+	List(context.Context) ([]NodeId, error)
 
 	// Describe returns information about agents whose IDs are given
-	Describe(ctx context.Context, ids []NodeId) ([]*ec2.Instance, error)
+	Describe(context.Context, []NodeId) ([]*ec2.Instance, error)
 
 	// ScalingActivityInProgress returns true if number of instances in
 	// cluster ASG is not the same as its desired capacity
-	ScalingActivityInProgress(ctx context.Context) (bool, error)
+	ScalingActivityInProgress(context.Context) (bool, error)
 }

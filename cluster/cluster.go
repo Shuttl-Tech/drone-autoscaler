@@ -13,7 +13,6 @@ import (
 )
 
 type cluster struct {
-	ctx       context.Context
 	asgName   string
 	ec2       ec2iface.EC2API
 	autoscale autoscalingiface.AutoScalingAPI
@@ -22,14 +21,8 @@ type cluster struct {
 type NodeId string
 
 // New returns a new Cluster object
-func New(
-	ctx context.Context,
-	asgName string,
-	ec2 ec2iface.EC2API,
-	asg autoscalingiface.AutoScalingAPI,
-) Cluster {
+func New(asgName string, ec2 ec2iface.EC2API, asg autoscalingiface.AutoScalingAPI) Cluster {
 	return cluster{
-		ctx:       ctx,
 		ec2:       ec2,
 		autoscale: asg,
 		asgName:   asgName,
