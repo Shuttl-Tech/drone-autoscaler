@@ -8,7 +8,7 @@ It was created because the [autoscaler provided by Drone](https://github.com/dro
 
 ## Usage
 ### Setup
-This app assumes that your Drone agent cluster is managed by an AWS Autoscaling Group.
+This app assumes that your Drone agent cluster is managed by an AWS Autoscaling Group. The AMI used by this group must already contain configuration to launch a Drone agent upon startup.
 
 ### Configuration
 The app's behaviour can be configured using various parameters
