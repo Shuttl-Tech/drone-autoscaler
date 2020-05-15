@@ -31,6 +31,8 @@ The app's behaviour can be configured using various parameters
 
 See [config.go](config/config.go) for parameter descriptions
 
+Note that the autoscaler cannot scale beyond the maximum machine count set in your agent autoscaling group.
+
 ### Running
 1. Download a pre-compiled binary from the releases page or build it from code using `make dist`.
 2. Set the required configuration parameters via environment variables.
