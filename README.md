@@ -8,7 +8,28 @@ It was created because the [autoscaler provided by Drone](https://github.com/dro
 
 ## Usage
 ### Setup
-This app assumes that your Drone agent cluster is managed by an AWS Autoscaling Group. The AMI used by this group must already contain configuration to launch a Drone agent upon startup.
+This app assumes that your Drone agent cluster is managed by an AWS Autoscaling Group. New machinesi in this group should already be configured to run an agent upon startup and those being stopped/terminated should stop the agent gracefully.
+
+The app needs access to IAM credentials with the following permissions:
+```
+ec2:DescribeTags
+
+ec2:DescribeInstances
+ec2:DescribeInstanceTypes
+ec2:DescribeInstanceStatus
+
+autoscaling:TerminateInstanceInAutoScalingGroup
+
+autoscaling:SetInstanceProtection
+autoscaling:SetDesiredCapacity
+
+autoscaling:DetachInstances
+
+autoscaling:DescribeScalingProcessTypes
+autoscaling:DescribeScalingActivities
+autoscaling:DescribeAutoScalingInstances
+autoscaling:DescribeAutoScalingGroups"
+```
 
 ### Configuration
 The app's behaviour can be configured using various parameters
